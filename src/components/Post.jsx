@@ -1,31 +1,71 @@
-function Post({ user, photo }) {
+import {
+  FaRegHeart,
+  FaRegComment,
+  FaRegBookmark,
+  FaRegSmile,
+} from "react-icons/fa";
+import { FiSend, FiMoreHorizontal } from "react-icons/fi";
+
+function Post({ user, photo, description }) {
   return (
-    <div className="border rounded-lg shadow hover:shadow-lg transition p-4 mb-6">
-      {/* En-tête avec l'utilisateur */}
-      <div className="flex items-center mb-4">
-        <img
-          src={user.avatar}
-          alt={user.username}
-          className="w-10 h-10 rounded-full mr-3"
-        />
-        <div>
-          <p className="font-semibold">{user.username}</p>
-          <p className="text-xs text-gray-500">{user.location}</p>
+    <div className="w-120 ml-auto mr-auto transition mb-6 bg-black p-4 text-white border-b border-gray-700">
+      {/* En-tête */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-3">
+          <img
+            src={user.avatar}
+            alt={user.username}
+            className="w-10 h-10 rounded-full"
+          />
+          <span className="font-semibold">{user.username}</span>
+          <span className="text-xs text-gray-400">· 21h</span>
         </div>
+        <FiMoreHorizontal className="text-xl cursor-pointer" />
       </div>
 
-      {/* Image du post */}
-      <div className="overflow-hidden rounded-lg">
+      {/* Photo */}
+      <div className="overflow-hidden rounded-lg mb-3">
         <img
           src={photo.url}
           alt={photo.alt || "Post"}
-          className="w-full object-cover hover:scale-105 transition"
+          className="w-full object-cover hover:scale-105 transition duration-300"
         />
       </div>
 
-      {/* Footer simple */}
-      <div className="mt-3 text-sm text-gray-600">
-        ❤️ {Math.floor(Math.random() * 500)} likes
+      {/* Actions */}
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex space-x-4">
+          <FaRegHeart className="text-2xl cursor-pointer" />
+          <FaRegComment className="text-2xl cursor-pointer" />
+          <FiSend className="text-2xl cursor-pointer" />
+        </div>
+        <FaRegBookmark className="text-2xl cursor-pointer" />
+      </div>
+
+      {/* Likes */}
+      <div className="text-sm font-semibold mb-2">
+        {Math.floor(Math.random() * 500)} J'aime
+      </div>
+
+      {/* Description */}
+      <div className="text-sm mb-2">
+        <span className="font-semibold mr-2">{user.username}</span>
+        <span className="line-clamp-2">{description}</span>
+      </div>
+
+      {/* Voir commentaires */}
+      <div className="text-sm text-gray-400 cursor-pointer mb-2 hover:underline">
+        Afficher les 25 commentaires
+      </div>
+
+      {/* Ajouter un commentaire */}
+      <div className="flex items-center">
+        <input
+          type="text"
+          placeholder="Ajouter un commentaire..."
+          className="pt-3 flex-1 bg-transparent outline-none placeholder-gray-500 text-sm"
+        />
+        <FaRegSmile className="text-xl ml-3 cursor-pointer" />
       </div>
     </div>
   );
