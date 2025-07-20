@@ -1,12 +1,14 @@
 function Story({ username, avatar }) {
   return (
-    <div className="flex flex-col items-center min-w-[60px]">
+    <div className="flex flex-col items-center w-full">
       <img
         src={avatar}
         alt={username}
-        className="w-14 h-14 rounded-full border-2 border-pink-500 p-1 hover:scale-105 transition"
+        className="max-w-[60px] rounded-full border-2 border-pink-500 p-1"
       />
-      <span className="text-xs text-white mt-1">{username}</span>
+      <span className="text-xs text-white mt-1 text-center truncate w-full">
+        {username}
+      </span>
     </div>
   );
 }
