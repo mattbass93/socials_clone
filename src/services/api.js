@@ -1,4 +1,5 @@
 import axios from "axios";
+import { faker } from "@faker-js/faker";
 
 // récupérer des utilisateurs fictifs
 export function fetchUsers(count = 10) {
@@ -23,15 +24,26 @@ export function fetchPhotos(count = 10) {
         });
 }
 
-// simuler un feed de posts : users + photos combinés
+export function fetchVideos(count = 10) {
+    const API_KEY = "gxnJqSbrtmD57tZA48tfjmPcKXl7lQHSRHmors66MHw35Kgh1OJfSnWT";
+    return axios
+        .get(`https://api.pexels.com/videos/popular?per_page=${count}`, {
+            headers: { Authorization: API_KEY }
+        })
+        .then(res => res.data.videos);
+}
+
+
+// simuler un feed de posts : users + photos + descriptions faker
 export async function fetchPosts(count = 10) {
     try {
+        // récupérer utilisateurs et photos en parallèle
         const [users, photos] = await Promise.all([
             fetchUsers(count),
             fetchPhotos(count)
         ]);
 
-        // fusionne : chaque user poste une photo
+        // créer la liste de posts
         return users.map((user, i) => ({
             user: {
                 username: user.login.username,
@@ -40,8 +52,9 @@ export async function fetchPosts(count = 10) {
             },
             photo: {
                 url: photos[i % photos.length]?.urls.small,
-                alt: photos[i % photos.length]?.alt_description
-            }
+                alt: photos[i % photos.length]?.alt_description || "Photo"
+            },
+            description: faker.lorem.sentence()
         }));
     } catch (err) {
         console.error("Erreur fetchPosts :", err);
