@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { fetchUsers, fetchPosts } from "../services/api";
-import Story from "../components/Story";
+import StoriesCarousel from "../components/StoriesCarousel";
 import Post from "../components/Post";
+import Sidebar from "../components/Sidebar";
+import Footer from "../components/Footer";
 
 function Home() {
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    fetchUsers(10).then(setUsers);
+    fetchUsers(36).then(setUsers);
     fetchPosts(12).then(setPosts);
   }, []);
 
@@ -17,24 +19,28 @@ function Home() {
   }
 
   return (
-    <div>
-      {/* Stories */}
-      <div className="flex space-x-4 overflow-x-auto pb-4 mb-6 border-b">
-        {users.map((user, index) => (
-          <Story
-            key={index}
-            username={user.login.username}
-            avatar={user.picture.thumbnail}
-          />
-        ))}
+    <div className="flex p-4 space-x-8">
+      {/* Main feed */}
+      <div className="flex-1">
+        {/* Stories */}
+        <StoriesCarousel users={users} />
+
+        {/* Feed */}
+        <div className="flex flex-col space-y-6">
+          {posts.map((post, index) => (
+            <Post
+              key={index}
+              user={post.user}
+              photo={post.photo}
+              description={post.description}
+            />
+          ))}
+        </div>
+        <Footer />
       </div>
 
-      {/* Feed avec des posts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post, index) => (
-          <Post key={index} user={post.user} photo={post.photo} />
-        ))}
-      </div>
+      {/* Sidebar à droite */}
+      <Sidebar />
     </div>
   );
 }
