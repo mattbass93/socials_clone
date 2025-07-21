@@ -6,7 +6,7 @@ import {
 } from "react-icons/fa";
 import { FiSend, FiMoreHorizontal } from "react-icons/fi";
 
-function Post({ user, photo, description }) {
+function Post({ user, media, description }) {
   return (
     <div className="w-120 ml-auto mr-auto transition mb-6 bg-black p-4 text-white border-b border-gray-700">
       {/* En-tête */}
@@ -23,13 +23,23 @@ function Post({ user, photo, description }) {
         <FiMoreHorizontal className="text-xl cursor-pointer" />
       </div>
 
-      {/* Photo */}
+      {/* Media (image ou vidéo) */}
       <div className="overflow-hidden rounded-lg mb-3">
-        <img
-          src={photo.url}
-          alt={photo.alt || "Post"}
-          className="w-full object-cover hover:scale-105 transition duration-300"
-        />
+        {media.type === "image" ? (
+          <img
+            src={media.url}
+            alt={media.alt || "Post"}
+            className="w-full object-cover hover:scale-105 transition duration-300"
+          />
+        ) : (
+          <video
+            src={media.url}
+            poster={media.thumbnail}
+            controls
+            muted
+            className="w-full object-cover max-h-[600px]"
+          />
+        )}
       </div>
 
       {/* Actions */}

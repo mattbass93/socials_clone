@@ -37,27 +37,39 @@ export function fetchVideos(count = 10) {
 // simuler un feed de posts : users + photos + descriptions faker
 export async function fetchPosts(count = 10) {
     try {
-        // récupérer utilisateurs et photos en parallèle
-        const [users, photos] = await Promise.all([
+        const [users, photos, videos] = await Promise.all([
             fetchUsers(count),
-            fetchPhotos(count)
+            fetchPhotos(count),
+            fetchVideos(count),
         ]);
 
-        // créer la liste de posts
-        return users.map((user, i) => ({
+        const media = [
+            ...photos.map((photo) => ({
+                type: "image",
+                url: photo.urls.small,
+                alt: photo.alt_description || "Image",
+            })),
+            ...videos.map((video) => ({
+                type: "video",
+                url: video.video_files.find((f) => f.quality === "sd")?.link || video.video_files[0]?.link,
+                thumbnail: video.image,
+            })),
+        ];
+
+        // mélanger le tableau media
+        const shuffled = media.sort(() => Math.random() - 0.5).slice(0, count);
+
+        return shuffled.map((media, i) => ({
             user: {
-                username: user.login.username,
-                avatar: user.picture.thumbnail,
-                location: `${user.location.city}, ${user.location.country}`
+                username: users[i % users.length].login.username,
+                avatar: users[i % users.length].picture.thumbnail,
+                location: `${users[i % users.length].location.city}, ${users[i % users.length].location.country}`,
             },
-            photo: {
-                url: photos[i % photos.length]?.urls.small,
-                alt: photos[i % photos.length]?.alt_description || "Photo"
-            },
-            description: faker.lorem.sentence()
+            media,
+            description: media.type === "image" ? faker.lorem.sentence() : "",
         }));
     } catch (err) {
-        console.error("Erreur fetchPosts :", err);
+        console.error("Erreur dans fetchPosts :", err);
         return [];
     }
 }
