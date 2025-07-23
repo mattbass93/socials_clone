@@ -1,42 +1,148 @@
 import { useEffect, useState } from "react";
-import { fetchPhotos } from "../services/api"; // ton api.js
-import { FaRegPlayCircle } from "react-icons/fa"; // pour simuler une icône vidéo
+import { fetchPhotos, fetchVideos } from "../services/api";
+import { FaRegPlayCircle, FaHeart, FaComment } from "react-icons/fa";
+import PostModal from "../components/PostModal";
 
 function Discover() {
-  const [photos, setPhotos] = useState([]);
+  const [mediaForYou, setMediaForYou] = useState([]);
+  const [mediaGeneric, setMediaGeneric] = useState([]);
+  const [activeTab, setActiveTab] = useState("foryou");
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   useEffect(() => {
-    fetchPhotos(30).then(setPhotos);
+    async function loadContent() {
+      try {
+        const [photos, videos] = await Promise.all([
+          fetchPhotos(30),
+          fetchVideos(15),
+        ]);
+
+        const photoItems = photos.map((photo) => ({
+          type: "image",
+          url: photo.urls.small,
+          alt: photo.alt_description || "Image",
+        }));
+
+        const videoItems = videos.map((video) => ({
+          type: "video",
+          url: video.video_files[0]?.link,
+          alt: video.user.name || "Vidéo",
+          thumbnail: video.image,
+        }));
+
+        const combined = [...photoItems, ...videoItems].sort(
+          () => Math.random() - 0.5
+        );
+
+        const midpoint = Math.floor(combined.length / 2);
+        setMediaForYou(combined.slice(0, midpoint));
+        setMediaGeneric(combined.slice(midpoint));
+      } catch (error) {
+        console.error("Erreur Discover:", error);
+      }
+    }
+
+    loadContent();
   }, []);
+
+  const mediaToShow = activeTab === "foryou" ? mediaForYou : mediaGeneric;
+
+  const handleOpenModal = (index) => {
+    setSelectedIndex(index);
+    setSelectedMedia(mediaToShow[index]);
+  };
+
+  const handleNext = () => {
+    const nextIndex = (selectedIndex + 1) % mediaToShow.length;
+    setSelectedIndex(nextIndex);
+    setSelectedMedia(mediaToShow[nextIndex]);
+  };
+
+  const handlePrev = () => {
+    const prevIndex =
+      (selectedIndex - 1 + mediaToShow.length) % mediaToShow.length;
+    setSelectedIndex(prevIndex);
+    setSelectedMedia(mediaToShow[prevIndex]);
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
-      {/* Entête "Pour vous" et "Non personnalisé" */}
+      {/* Onglets */}
       <div className="flex space-x-6 mb-4">
-        <span className="text-white font-semibold cursor-pointer hover:underline">
+        <span
+          className={`cursor-pointer ${
+            activeTab === "foryou"
+              ? "text-white font-bold"
+              : "text-gray-400 font-bold"
+          }`}
+          onClick={() => setActiveTab("foryou")}
+        >
           Pour vous
         </span>
-        <span className="text-gray-400 cursor-pointer hover:underline">
+        <span
+          className={`cursor-pointer ${
+            activeTab === "generic"
+              ? "text-white font-bold"
+              : "text-gray-400 font-bold "
+          }`}
+          onClick={() => setActiveTab("generic")}
+        >
           Non personnalisé
         </span>
       </div>
 
-      {/* Grille de posts */}
+      {/* Grille de médias */}
       <div className="grid grid-cols-3 gap-2">
-        {photos.map((photo, index) => (
-          <div key={index} className="relative group">
-            <img
-              src={photo.urls.small}
-              alt={photo.alt_description || "Discover"}
-              className="w-full h-full object-cover rounded-sm"
-            />
-            {/* Pour simuler des vidéos, on peut afficher un petit icône sur certaines */}
-            {index % 7 === 0 && (
-              <FaRegPlayCircle className="absolute top-2 right-2 text-white text-xl" />
-            )}
-          </div>
-        ))}
+        {mediaToShow.map((item, index) => {
+          const likes = Math.floor(Math.random() * 1000);
+          const comments = Math.floor(Math.random() * 500);
+
+          return (
+            <div
+              key={index}
+              className="relative group cursor-pointer"
+              onClick={() => handleOpenModal(index)}
+            >
+              <img
+                src={item.type === "image" ? item.url : item.thumbnail}
+                alt={item.alt}
+                className="w-full h-full min-h-40 object-cover rounded-sm"
+              />
+
+              {/* Overlay semi-transparent */}
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-80 z-10"></div>
+
+              {/* Compteurs visibles seulement au hover */}
+              <div className="absolute inset-0 z-20 flex items-center justify-center space-x-6 text-white text-sm font-semibold opacity-0 group-hover:opacity-100">
+                <div className="flex items-center space-x-1">
+                  <FaHeart className="text-lg" />
+                  <span>{likes}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <FaComment className="text-lg" />
+                  <span>{comments}</span>
+                </div>
+              </div>
+
+              {/* Icône vidéo */}
+              {item.type === "video" && (
+                <FaRegPlayCircle className="absolute top-2 right-2 text-white text-xl z-30" />
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Modale */}
+      {selectedMedia && (
+        <PostModal
+          media={selectedMedia}
+          onClose={() => setSelectedMedia(null)}
+          onNext={handleNext}
+          onPrev={handlePrev}
+        />
+      )}
     </div>
   );
 }
