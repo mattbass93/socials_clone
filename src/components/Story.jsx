@@ -4,7 +4,7 @@ function Story({ username, avatar }) {
       <img
         src={avatar}
         alt={username}
-        className="max-w-[60px] rounded-full border-2 border-pink-500 p-1"
+        className="w-21 rounded-full border-2 border-pink-500 p-1"
       />
       <span className="text-xs text-white mt-1 text-center truncate w-full">
         {username}

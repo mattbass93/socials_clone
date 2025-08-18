@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-function NotificationsOverlay() {
+function NotificationsOverlay({ onClose }) {
   const [notifications, setNotifications] = useState([]);
+  const overlayRef = useRef(null);
 
   useEffect(() => {
     axios
@@ -66,8 +67,23 @@ function NotificationsOverlay() {
       .catch(console.error);
   }, []);
 
+  // 👇 Fermer si clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (overlayRef.current && !overlayRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   return (
-    <div className="fixed top-0 left-13 bottom-0 w-100 bg-black border-r border-gray-700 text-white px-6 pt-8 overflow-y-auto z-50">
+    <div
+      ref={overlayRef}
+      className="fixed top-0 left-13 bottom-0 w-100 bg-black border-r border-gray-700 text-white px-6 pt-8 overflow-y-auto z-50"
+    >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Notifications</h2>

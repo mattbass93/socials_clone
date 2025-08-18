@@ -101,8 +101,8 @@ export default function CreateModal({ onClose }) {
     }
   };
 
-  const getFilterClass = () => {
-    switch (selectedFilter) {
+  const getFilterClass = (filter = selectedFilter) => {
+    switch (filter) {
       case "Clarendon":
         return "brightness-110 contrast-125";
       case "Crema":
@@ -192,6 +192,63 @@ export default function CreateModal({ onClose }) {
     { key: "4:5", label: "4:5", icon: <LuRectangleVertical size={18} /> },
     { key: "16:9", label: "16:9", icon: <LuRectangleHorizontal size={18} /> },
   ];
+
+  const getFilterStyle = () => {
+    let baseFilter = "";
+
+    switch (selectedFilter) {
+      case "Clarendon":
+        baseFilter = "brightness(1.1) contrast(1.25)";
+        break;
+      case "Crema":
+        baseFilter = "sepia(1)";
+        break;
+      case "Gingham":
+        baseFilter = "brightness(0.9)";
+        break;
+      case "Juno":
+        baseFilter = "saturate(1.5)";
+        break;
+      case "Lark":
+        baseFilter = "brightness(1.05) contrast(1.1)";
+        break;
+      case "Ludwig":
+        baseFilter = "contrast(1.25) grayscale(1)";
+        break;
+      case "Moon":
+        baseFilter = "grayscale(1) contrast(1.1)";
+        break;
+      case "Perpetua":
+        baseFilter = "saturate(1.25)";
+        break;
+      case "Reyes":
+        baseFilter = "brightness(0.95) sepia(1)";
+        break;
+      case "Slumber":
+        baseFilter = "brightness(0.9) contrast(0.9)";
+        break;
+      case "Aden":
+        baseFilter = "sepia(1) brightness(1.05)";
+        break;
+      default:
+        baseFilter = "";
+    }
+
+    const adjustments = `
+    brightness(${1 + brightness / 100})
+    contrast(${1 + contrast / 100})
+    saturate(${1 + saturation / 100})
+    sepia(${fade / 100})
+    hue-rotate(${temperature * 1.8}deg)
+    drop-shadow(0 0 ${Math.abs(vignette)}px rgba(0,0,0,${
+      vignette > 0 ? 0.3 : 0
+    }))
+  `;
+
+    return {
+      filter: `${baseFilter} ${adjustments}`,
+    };
+  };
 
   const getAdjustmentStyle = () => {
     return {
@@ -295,7 +352,7 @@ export default function CreateModal({ onClose }) {
                         src={currentMedia.url}
                         alt="preview"
                         className={`w-full h-full object-cover pointer-events-none ${getFilterClass()}`}
-                        style={getAdjustmentStyle()}
+                        style={getFilterStyle()}
                       />
                     ) : (
                       <video

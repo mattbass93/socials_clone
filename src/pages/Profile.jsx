@@ -51,10 +51,16 @@ function Profile() {
         <div className="flex-1">
           <div className="flex items-center space-x-4 mb-4">
             <h2 className="text-2xl">{user.login.username}</h2>
-            <button className="bg-gray-800 text-white text-sm px-4 py-1 rounded font-semibold border border-gray-600">
-              Modifier profil
+            <button
+              style={{ backgroundColor: "rgb(38, 38, 38)" }}
+              className="text-white text-sm px-5 py-2 hover:brightness-120 rounded-xl font-semibold"
+            >
+              Modifier le profil
             </button>
-            <button className="bg-gray-800 text-white text-sm px-4 py-1 rounded font-semibold border border-gray-600">
+            <button
+              style={{ backgroundColor: "rgb(38, 38, 38)" }}
+              className="bg-gray-800 text-white text-sm px-5 py-2 hover:brightness-120 rounded-xl font-semibold"
+            >
               Voir l’archive
             </button>
             <IoIosSettings className="text-2xl" />

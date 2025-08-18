@@ -9,6 +9,9 @@ import SearchOverlay from "./components/SearchOverlay";
 import NotificationsOverlay from "./components/NotificationsOverlay";
 import MessagesOverlay from "./components/MessagesOverlay";
 import Profile from "./pages/Profile";
+import MetaAi from "./pages/MetaAi";
+import AiStudio from "./pages/AiStudio";
+import Threads from "./pages/Threads";
 
 function App() {
   const [activeOverlay, setActiveOverlay] = useState(null); // 'search' | 'notifications' | 'messages' | null
@@ -27,13 +30,16 @@ function App() {
           onMessagesClick={() => handleOverlay("messages")}
         />
 
-        <div className="ml-64 flex-1 p-6">
+        <div className=" w-[100%]">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/reels" element={<Reels />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/meta_ai" element={<MetaAi />} />
+            <Route path="/ai_studio" element={<AiStudio />} />
+            <Route path="/threads" element={<Threads />} />
           </Routes>
         </div>
       </div>

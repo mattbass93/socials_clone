@@ -15,31 +15,32 @@ function Home() {
   }, []);
 
   if (users.length === 0 || posts.length === 0) {
-    return <div className="p-4">Chargement...</div>;
+    return <div className="p-4 text-white">Chargement...</div>;
   }
 
   return (
-    <div className="flex p-4 space-x-8">
+    <div className="flex p-4 justify-center gap-8">
       {/* Main feed */}
-      <div className="flex-1">
+      <div className=" max-w-[700px]">
         {/* Stories */}
         <StoriesCarousel users={users} />
 
-        {/* Feed */}
+        {/* Feed de posts */}
         <div className="flex flex-col space-y-6">
           {posts.map((post, index) => (
             <Post
               key={index}
               user={post.user}
-              photo={post.photo}
+              media={post.media}
               description={post.description}
             />
           ))}
         </div>
+
         <Footer />
       </div>
 
-      {/* Sidebar à droite */}
+      {/* Sidebar */}
       <Sidebar />
     </div>
   );

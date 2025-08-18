@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { FaTimes } from "react-icons/fa";
 import axios from "axios";
 
 function SearchOverlay({ visible, onClose }) {
@@ -50,13 +51,14 @@ function SearchOverlay({ visible, onClose }) {
       <div className="w-90 max-w-md mb-8">
         <input
           type="text"
-          placeholder="Rechercher..."
-          className="w-full px-4 py-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
+          placeholder="Rechercher"
+          style={{ backgroundColor: "rgb(38, 38, 38)" }}
+          className="w-full px-4 py-2 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none "
         />
       </div>
 
       {/* Section Recent */}
-      <div className="w-90 max-w-md mb-6">
+      <div className="w-90 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-white text-lg">Récent</h3>
           <button
@@ -71,7 +73,7 @@ function SearchOverlay({ visible, onClose }) {
           {users.map((user, index) => (
             <div
               key={index}
-              className="flex items-center justify-between pl-4 pr-4 pb-1"
+              className="flex items-center justify-between pb-1 hover:bg-[rgb(38,38,38)] cursor-pointer"
             >
               <div className="flex items-center space-x-3">
                 <img
@@ -90,9 +92,9 @@ function SearchOverlay({ visible, onClose }) {
               </div>
               <button
                 onClick={() => removeUser(index)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-400 text-xl"
               >
-                X
+                <FaTimes />
               </button>
             </div>
           ))}

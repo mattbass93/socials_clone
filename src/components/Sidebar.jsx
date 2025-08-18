@@ -15,7 +15,7 @@ function Sidebar() {
   if (!user) return null;
 
   return (
-    <div className="w-80 ml-auto p-6 text-sm text-gray-400 space-y-6">
+    <div className="w-80 p-6 text-sm text-gray-400 space-y-6">
       {/* Profil utilisateur principal */}
       <div className="flex items-center space-x-3">
         <img
@@ -37,7 +37,7 @@ function Sidebar() {
       {/* Suggestions */}
       <div className="flex justify-between items-center">
         <p className="text-white-500 font-semibold">Suggestions pour vous</p>
-        <p className="text-white text-xs cursor-pointer hover:underline">
+        <p className="text-white text-xs cursor-pointer hover:text-gray-400">
           Voir tout
         </p>
       </div>
@@ -57,7 +57,7 @@ function Sidebar() {
                 {sug.location.city}, {sug.location.country}
               </p>
             </div>
-            <span className="ml-auto text-blue-500 text-xs cursor-pointer hover:underline">
+            <span className="ml-auto text-pink-500 text-xs cursor-pointer hover:text-pink-400">
               Suivre
             </span>
           </div>
