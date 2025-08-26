@@ -82,7 +82,7 @@ function NotificationsOverlay({ onClose }) {
   return (
     <div
       ref={overlayRef}
-      className="fixed top-0 left-13 bottom-0 w-100 bg-black border-r border-gray-700 text-white px-6 pt-8 overflow-y-auto z-50"
+      className="fixed top-0 left-11 bottom-0 w-100 bg-black border-r border-gray-700 text-white px-6 pt-8 overflow-y-auto z-50"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
