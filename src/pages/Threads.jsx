@@ -59,11 +59,11 @@ function Threads() {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex overflow-hidden z-50">
+    <div className="fixed inset-0 bg-black text-white flex flex-col md:flex-row overflow-hidden z-50">
       {/* Sidebar gauche */}
-      <div className="w-20 h-full bg-black border-r border-gray-800 flex flex-col items-center py-4 justify-between">
-        <div className="flex flex-col items-center space-y-8">
-          <FiAtSign src="/threads-icon.svg" alt="Threads" className="w-6 h-6" />
+      <div className="w-full md:w-20 h-16 md:h-full bg-black border-t md:border-t-0 md:border-r border-gray-800 flex md:flex-col items-center justify-between py-1 md:py-4 px-4 md:px-0">
+        <div className="flex md:flex-col items-center space-x-6 md:space-x-0 md:space-y-8">
+          <FiAtSign className="w-6 h-6" />
           <FiHome className="text-2xl text-white" />
           <FiSearch className="text-xl text-gray-400" />
           <button className="bg-[#262626] p-2 rounded-lg">
@@ -73,17 +73,17 @@ function Threads() {
           <FiUser className="text-xl text-gray-400" />
         </div>
 
-        <div className="flex flex-col items-center space-y-6 mb-4">
+        <div className="hidden md:flex flex-col items-center space-y-6 mb-4">
           <HiOutlineMenuAlt2 className="text-xl text-gray-400" />
           <div className="w-6 h-0.5 bg-gray-600" />
         </div>
       </div>
 
       {/* Contenu central */}
-      <div className="flex-1 overflow-y-auto pt-4 flex justify-center">
+      <div className="flex-1 overflow-y-auto pt-2 md:pt-4 flex justify-center">
         <div className="w-full max-w-xl px-4 pb-12">
           {/* Header avec retour et bouton se connecter */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <button
               onClick={() => navigate(-1)}
               className="text-white text-2xl"
@@ -91,8 +91,10 @@ function Threads() {
               <IoArrowBack />
             </button>
 
-            <h1 className="text-xl font-bold text-center">Accueil</h1>
-            <button className="bg-white text-black text-sm px-3 py-1 rounded font-medium">
+            <h1 className="text-lg md:text-xl font-bold text-center">
+              Accueil
+            </h1>
+            <button className="bg-white text-black text-xs md:text-sm px-3 py-1 rounded font-medium">
               Se connecter
             </button>
           </div>
@@ -101,7 +103,7 @@ function Threads() {
           {posts.map((post, i) => (
             <div
               key={i}
-              className="bg-[#121212] border border-gray-800 rounded-lg p-4 mb-6"
+              className="bg-[#121212] border border-gray-800 rounded-lg p-4 mb-4 md:mb-6"
             >
               <div className="flex items-start gap-3 mb-3">
                 <img
@@ -121,7 +123,7 @@ function Threads() {
               </div>
 
               {post.media && (
-                <div className="w-full h-80 rounded-md overflow-hidden mb-3">
+                <div className="w-full h-64 md:h-80 rounded-md overflow-hidden mb-3">
                   <img
                     src={post.media}
                     alt="media"
@@ -140,7 +142,7 @@ function Threads() {
           ))}
 
           {/* Footer */}
-          <footer className="text-xs text-gray-500 text-center mt-12 leading-5">
+          <footer className="text-xs text-gray-500 text-center mt-4 md:mt-12 leading-5">
             <p className="mb-1">© 2025 Conditions générales de Threads</p>
             <p className="mb-1">
               Politique de confidentialité · Politique d’utilisation des cookies
