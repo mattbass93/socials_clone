@@ -4,61 +4,51 @@ import axios from "axios";
 
 function SearchOverlay({ visible, onClose }) {
   const [users, setUsers] = useState([]);
-  const overlayRef = useRef();
+  const panelRef = useRef(null);
 
-  // Charger des users fictifs
+  // Charger des users fictifs quand visible
   useEffect(() => {
-    if (visible) {
-      axios
-        .get("https://randomuser.me/api/?results=5")
-        .then((res) => setUsers(res.data.results))
-        .catch((err) => console.error(err));
-    }
+    if (!visible) return;
+    axios
+      .get("https://randomuser.me/api/?results=5")
+      .then((res) => setUsers(res.data.results))
+      .catch((err) => console.error(err));
   }, [visible]);
 
-  // Fermer si clic en dehors
+  // Fermer si clic en dehors du panneau
   useEffect(() => {
+    if (!visible) return;
+
     function handleClickOutside(event) {
-      if (overlayRef.current && !overlayRef.current.contains(event.target)) {
-        onClose();
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        onClose?.();
       }
     }
 
-    if (visible) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [visible, onClose]);
-
-  // Supprimer user
-  const removeUser = (index) => {
-    setUsers(users.filter((_, i) => i !== index));
-  };
 
   if (!visible) return null;
 
   return (
     <div
-      ref={overlayRef}
-      className="fixed left-13 top-0 bottom-0 bg-black w-100 bg-opacity-90 z-50 border-r border-gray-700 flex flex-col items-center overflow-y-auto"
+      ref={panelRef}
+      className="fixed left-11 top-0 bottom-0 w-[350px] bg-black z-[60] border-r border-gray-700 flex flex-col items-center overflow-y-auto"
     >
-      <h2 className="w-90 text-white text-2xl mb-6 mt-5">Recherche</h2>
+      <h2 className="w-11/12 text-white text-2xl mb-6 mt-5">Recherche</h2>
 
       {/* Barre de recherche */}
-      <div className="w-90 max-w-md mb-8">
+      <div className="w-11/12 max-w-md mb-8">
         <input
           type="text"
           placeholder="Rechercher"
-          style={{ backgroundColor: "rgb(38, 38, 38)" }}
-          className="w-full px-4 py-2 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none "
+          className="w-full px-4 py-2 rounded-md bg-[rgb(38,38,38)] text-white placeholder-gray-400 focus:outline-none"
         />
       </div>
 
-      {/* Section Recent */}
-      <div className="w-90 mb-6">
+      {/* Section Récent */}
+      <div className="w-11/12 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-white text-lg">Récent</h3>
           <button
@@ -73,7 +63,7 @@ function SearchOverlay({ visible, onClose }) {
           {users.map((user, index) => (
             <div
               key={index}
-              className="flex items-center justify-between pb-1 hover:bg-[rgb(38,38,38)] cursor-pointer"
+              className="flex items-center justify-between pb-1 hover:bg-[rgb(38,38,38)] cursor-pointer rounded-md px-2"
             >
               <div className="flex items-center space-x-3">
                 <img
@@ -91,7 +81,9 @@ function SearchOverlay({ visible, onClose }) {
                 </div>
               </div>
               <button
-                onClick={() => removeUser(index)}
+                onClick={() =>
+                  setUsers((prev) => prev.filter((_, i) => i !== index))
+                }
                 className="text-gray-400 text-xl"
               >
                 <FaTimes />

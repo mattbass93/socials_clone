@@ -67,7 +67,7 @@ function Discover() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
+    <div className="w-full max-w-3xl mx-auto lg:ml-[25%] p-4">
       {/* Onglets */}
       <div className="flex space-x-6 mb-4">
         <span
