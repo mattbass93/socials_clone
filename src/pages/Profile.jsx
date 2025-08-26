@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { fetchPhotos, fetchUsers } from "../services/api";
-import { IoIosSettings } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
+import { FiPlusSquare } from "react-icons/fi";
 import { MdGridOn } from "react-icons/md";
-import { FaUserCircle, FaRegBookmark } from "react-icons/fa";
-import { FaEye } from "react-icons/fa";
+import { FaUserCircle, FaRegBookmark, FaUserPlus } from "react-icons/fa";
+import { FaThreads } from "react-icons/fa6";
+import { RxHamburgerMenu } from "react-icons/rx";
+import CreateModalMobile from "../components/CreateModalMobile";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [allPhotos, setAllPhotos] = useState([]);
   const [activeTab, setActiveTab] = useState("posts");
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers()
@@ -28,101 +33,124 @@ function Profile() {
   };
 
   const tabClass = (tab) =>
-    `flex items-center px-6 py-4 cursor-pointer ${
+    `flex items-center px-4 py-3 cursor-pointer text-xs ${
       activeTab === tab
         ? "text-white border-b-2 border-white"
         : "text-gray-400 hover:text-white"
     }`;
 
   return (
-    <div className="text-white p-8 max-w-5xl mx-auto flex flex-col items-center">
-      {/* En-tête */}
-      <div className="flex items-center space-x-10 mb-6">
-        <div className="relative flex flex-col">
-          <div className="absolute -top-10 -left-0 text-sm bg-gray-700 text-white px-3 py-4 rounded-full">
-            Note...
-          </div>
-          <img
-            src={user.picture.large}
-            alt={user.login.username}
-            className="w-32 h-32 rounded-full border-2 border-pink-500"
+    <div className="w-full min-h-screen bg-black text-white">
+      {/* ✅ Barre fixe en haut */}
+      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-black z-50 gap-4">
+        {/* Nom d'utilisateur */}
+        <h2 className="text-lg font-bold">{user?.login.username}</h2>
+
+        {/* Icônes avec actions */}
+        <div className="flex items-center gap-4">
+          {/* Lien vers /threads */}
+          <FaThreads
+            className="text-xl cursor-pointer"
+            onClick={() => navigate("/threads")}
+          />
+
+          {/* Ouvrir CreateModalMobile */}
+          <FiPlusSquare
+            className="text-xl cursor-pointer"
+            onClick={() => setCreateModalOpen(true)}
+          />
+
+          {/* Lien vers paramètres et activité */}
+          <RxHamburgerMenu
+            className="text-xl cursor-pointer"
+            onClick={() => navigate("/settings")}
           />
         </div>
-        <div className="flex-1">
-          <div className="flex items-center space-x-4 mb-4">
-            <h2 className="text-2xl">{user.login.username}</h2>
-            <button
-              style={{ backgroundColor: "rgb(38, 38, 38)" }}
-              className="text-white text-sm px-5 py-2 hover:brightness-120 rounded-xl font-semibold"
-            >
-              Modifier le profil
-            </button>
-            <button
-              style={{ backgroundColor: "rgb(38, 38, 38)" }}
-              className="bg-gray-800 text-white text-sm px-5 py-2 hover:brightness-120 rounded-xl font-semibold"
-            >
-              Voir l’archive
-            </button>
-            <IoIosSettings className="text-2xl" />
-          </div>
-          <div className="flex space-x-6 text-sm mb-3">
-            <span>
-              <strong className="font-semibold">433</strong> publications
-            </span>
-            <span>
-              <strong className="font-semibold">81k</strong> abonnés
-            </span>
-            <span>
-              <strong className="font-semibold">92</strong> abonnements
-            </span>
-          </div>
-          <div className="text-sm leading-5">
-            <p className="font-semibold">
-              {user.name.first} {user.name.last}
-            </p>
-            <p>
-              {user.location.city}, {user.location.country}
-            </p>
-            <p>{user.email}</p>
-            <p className="text-blue-400">www.{user.login.username}.com</p>
-          </div>
+
+        {/* Modal pour CreateModalMobile */}
+        {isCreateModalOpen && (
+          <CreateModalMobile
+            onClose={() => setCreateModalOpen(false)} // Ferme le modal
+          />
+        )}
+      </div>
+
+      {/* ✅ En-tête */}
+      <div className="flex items-center gap-3 mt-6 mb-4 px-4">
+        {/* Avatar et statistiques */}
+        <img
+          src={user.picture.large}
+          alt={user.login.username}
+          className="w-14 h-14 rounded-full border-2 border-pink-500"
+        />
+        <div className="flex gap-3 text-sm mb-5">
+          <span>
+            <strong className="font-semibold">433</strong> publications
+          </span>
+          <span>
+            <strong className="font-semibold">81k</strong> followers
+          </span>
+          <span>
+            <strong className="font-semibold">92</strong> suivi(e)s
+          </span>
         </div>
       </div>
 
-      {/* Onglets */}
-      <div className="flex justify-around w-full border-b border-gray-700 mt-6">
+      {/* Boutons sous l'en-tête */}
+      <div className="flex gap-3 px-4 mb-2">
+        {/* Bouton Modifier le profil */}
+        <button className="bg-[#262626] text-white text-xs md:text-sm px-4 py-2 rounded-md font-semibold hover:brightness-110">
+          Modifier le profil
+        </button>
+
+        {/* Bouton Partager le profil */}
+        <button className="bg-[#262626] text-white text-xs md:text-sm px-4 py-2 rounded-md font-semibold hover:brightness-110">
+          Partager le profil
+        </button>
+
+        {/* Bouton Ajouter un utilisateur */}
+        <button className="bg-[#262626] text-white p-2 rounded-md hover:brightness-110">
+          <FaUserPlus className="text-sm" />
+        </button>
+      </div>
+
+      {/* ✅ Onglets */}
+      <div className="flex justify-around border-b border-gray-700">
         <div
           className={tabClass("posts")}
           onClick={() => setActiveTab("posts")}
         >
-          <MdGridOn className="text-2xl" />
+          <MdGridOn className="text-lg" />
         </div>
         <div
           className={tabClass("saved")}
           onClick={() => setActiveTab("saved")}
         >
-          <FaRegBookmark className="text-2xl" />
+          <FaRegBookmark className="text-lg" />
         </div>
         <div
           className={tabClass("tagged")}
           onClick={() => setActiveTab("tagged")}
         >
-          <FaUserCircle className="text-2xl" />
+          <FaUserCircle className="text-lg" />
         </div>
       </div>
 
-      {/* Grille d’images */}
-      <div className="grid grid-cols-3 gap-1 mt-2">
+      {/* ✅ Galerie d’images */}
+      <div className="grid grid-cols-3 gap-[2px] px-[1px]">
         {getPhotosByTab().map((photo, i) => {
-          const views = Math.floor(Math.random() * 10000) + 100; // simulate 100-10100 vues
+          const views = Math.floor(Math.random() * 10000) + 100;
           return (
-            <div key={i} className="relative">
+            <div
+              key={i}
+              className="relative w-full aspect-square overflow-hidden"
+            >
               <img
                 src={photo.urls.small}
                 alt={`post-${i}`}
-                className="w-full aspect-square object-cover"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-[10px] px-1.5 py-0.5 rounded">
                 👁 {views.toLocaleString()} vues
               </div>
             </div>

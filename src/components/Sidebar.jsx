@@ -4,18 +4,28 @@ import { fetchUsers } from "../services/api";
 function Sidebar() {
   const [user, setUser] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [isVisible, setIsVisible] = useState(window.innerWidth >= 1070);
 
   useEffect(() => {
-    // Charger un user principal
+    // Charger les données utilisateur
     fetchUsers(1).then((users) => setUser(users[0]));
-    // Charger les suggestions
     fetchUsers(5).then(setSuggestions);
+
+    // Écoute des changements de taille
+    const handleResize = () => {
+      setIsVisible(window.innerWidth >= 1070);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Nettoyage de l'écouteur
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (!user) return null;
+  if (!user || !isVisible) return null;
 
   return (
-    <div className="w-80 p-6 text-sm text-gray-400 space-y-6">
+    <div className="w-[287px] py-6 text-sm text-gray-400 space-y-6 ">
       {/* Profil utilisateur principal */}
       <div className="flex items-center space-x-3">
         <img

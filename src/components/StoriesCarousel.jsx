@@ -1,81 +1,259 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Story from "./Story";
+import StoryViewer from "./StoryViewer";
 
-function StoriesCarousel({ users }) {
+/**
+ * Props:
+ * - users: Array<User>
+ * - mediaPool: (string | {url?:string, src?:string, image?:string, video?:string})[]
+ *
+ * Comportement:
+ * - "Votre story" est affichée en premier, SANS story (non cliquable).
+ * - Tous les autres users ouvrent une story générée aléatoirement.
+ * - La navigation prev/next dans le viewer IGNORE "Votre story".
+ */
+function StoriesCarousel({ users, mediaPool = [] }) {
   const visibleCount = 6;
   const [page, setPage] = useState(0);
 
-  const totalPages = Math.ceil(users.length / visibleCount);
+  // ---- Normalisation du mediaPool en URLs string http(s)
+  const normalizeMediaPool = (poolLike) => {
+    const toUrls = (m) => {
+      if (!m) return [];
+      if (typeof m === "string") return [m];
+      if (Array.isArray(m)) return m.flatMap(toUrls);
+      if (typeof m === "object") {
+        return [m.url, m.src, m.image, m.video].filter(Boolean);
+      }
+      return [];
+    };
+    const flat = toUrls(poolLike);
+    return flat
+      .filter((u) => typeof u === "string" && /^https?:\/\//i.test(u))
+      .filter(Boolean);
+  };
+  const normalizedPool = useMemo(
+    () => normalizeMediaPool(mediaPool),
+    [mediaPool]
+  );
 
-  const handlePrev = () => {
-    if (page > 0) setPage(page - 1);
+  // ---- Construction de la liste d'affichage avec "Votre story" en tête
+  const extendedUsers = useMemo(() => {
+    const self = {
+      isSelf: true,
+      login: { username: "Votre story" },
+      picture: { thumbnail: undefined },
+    };
+    return [self, ...(users ?? [])];
+  }, [users]);
+
+  // ---- Liste des VRAIS utilisateurs qui ont des stories (exclut "Votre story")
+  const playableUsers = useMemo(
+    () => extendedUsers.filter((u) => !u.isSelf),
+    [extendedUsers]
+  );
+
+  const totalPages = useMemo(
+    () => Math.ceil(extendedUsers.length / visibleCount),
+    [extendedUsers.length]
+  );
+
+  const handlePrev = () => page > 0 && setPage((p) => p - 1);
+  const handleNext = () => page < totalPages - 1 && setPage((p) => p + 1);
+
+  // --------- Génération aléatoire de stories ---------
+  const sample = (arr, k) => {
+    const copy = [...arr];
+    const out = [];
+    for (let i = 0; i < k && copy.length; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      out.push(copy.splice(idx, 1)[0]);
+    }
+    return out;
   };
 
-  const handleNext = () => {
-    if (page < totalPages - 1) setPage(page + 1);
+  const isVideo = (url) => {
+    if (!url || typeof url !== "string") return false;
+    const u = url.split("?")[0].toLowerCase();
+    return [".mp4", ".webm", ".ogg", ".mov", ".m4v"].some((ext) =>
+      u.endsWith(ext)
+    );
   };
 
-  return (
-    <div className="w-full max-w-xl mx-auto mb-6 overflow-hidden">
-      {/* Tabs */}
-      <div className="flex space-x-6 mb-4">
-        <span className="text-white font-semibold cursor-pointer hover:underline">
-          Pour Vous
-        </span>
-        <span className="text-gray-400 cursor-pointer hover:underline">
-          Suivi(e)
-        </span>
-      </div>
+  const buildRandomStories = (countMin = 3, countMax = 5) => {
+    const count =
+      countMin +
+      Math.floor(Math.random() * Math.max(1, countMax - countMin + 1));
+    const pool =
+      normalizedPool && normalizedPool.length ? normalizedPool : null;
+    const picks = pool ? sample(pool, Math.min(count, pool.length)) : [];
+    const fromPool = picks.map((url) => ({
+      type: isVideo(url) ? "video" : "image",
+      url,
+      duration: isVideo(url)
+        ? undefined
+        : 4000 + Math.floor(Math.random() * 2500),
+    }));
+    if (fromPool.length) return fromPool;
 
-      {/* Carousel */}
-      <div className="relative pt-4 border-t border-gray-700">
-        <div className="relative w-full overflow-hidden">
+    // Fallback si aucun média valide
+    return Array.from({ length: count }).map((_, i) => ({
+      type: "image",
+      url: `https://picsum.photos/seed/story-${Date.now()}-${i}/900/1600`,
+      duration: 4500,
+    }));
+  };
+
+  // --- État du viewer + index utilisateur courant (dans playableUsers, PAS extendedUsers)
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerUserIndex, setViewerUserIndex] = useState(0); // index dans playableUsers
+  const [viewerInitialUser, setViewerInitialUser] = useState(null);
+  const [viewerInitialStories, setViewerInitialStories] = useState([]);
+
+  // Ouvre le viewer uniquement pour un user "jouable" (pas self)
+  const openViewer = (user) => {
+    if (user?.isSelf) return; // sécurité
+    const idx = playableUsers.findIndex(
+      (u) => u === user || u?.login?.username === user?.login?.username
+    );
+    if (idx === -1) return;
+
+    const stories = buildRandomStories();
+    setViewerUserIndex(idx);
+    setViewerInitialUser(user);
+    setViewerInitialStories(stories);
+    setViewerOpen(true);
+  };
+
+  const closeViewer = () => {
+    setViewerOpen(false);
+    setViewerInitialUser(null);
+    setViewerInitialStories([]);
+  };
+
+  // Fournis au viewer le "user suivant" et "précédent" depuis playableUsers (skip "Votre story")
+  const requestNextUser = () => {
+    const nextIndex = viewerUserIndex + 1;
+    if (nextIndex < playableUsers.length) {
+      const user = playableUsers[nextIndex];
+      const stories = buildRandomStories();
+      setViewerUserIndex(nextIndex);
+      return { user, stories };
+    }
+    return null; // plus d'utilisateur -> StoryViewer fermera
+  };
+
+  const requestPrevUser = () => {
+    const prevIndex = viewerUserIndex - 1;
+    if (prevIndex >= 0) {
+      const user = playableUsers[prevIndex];
+      const stories = buildRandomStories();
+      setViewerUserIndex(prevIndex);
+      return { user, stories };
+    }
+    return null; // pas d'utilisateur précédent -> StoryViewer fermera
+  };
+
+  // --- Mobile (scroll horizontal)
+  const mobileStories = (
+    <div className="flex w-screen  items-center lg:hidden">
+      <div className="flex overflow-x-auto no-scrollbar space-x-1 px-1 pl-3">
+        {extendedUsers.map((user, index) => (
           <div
-            className="flex transition-transform duration-400 ease-in-out"
-            style={{
-              transform: `translateX(-${page * 100}%)`,
-              width: `${totalPages * 100}%`,
-            }}
+            key={`${user.login?.username ?? "self"}-${index}`}
+            className="flex-shrink-0"
           >
-            {Array.from({ length: totalPages }).map((_, i) => (
+            <Story
+              username={user.login.username}
+              avatar={user.isSelf ? undefined : user.picture?.thumbnail}
+              isSelf={user.isSelf}
+              onClick={() => !user.isSelf && openViewer(user)} // self = NON cliquable
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // --- Desktop (pagination)
+  const desktopStories = (
+    <div className="relative max-w-[630px] pt-4 border-t border-gray-700 hidden lg:block">
+      <div className="relative w-full max-w-[630px] overflow-hidden">
+        <div
+          className="flex transition-transform duration-400 ease-in-out"
+          style={{
+            transform: `translateX(-${page * 100}%)`,
+            width: `${totalPages * 100}%`,
+          }}
+        >
+          {Array.from({ length: totalPages }).map((_, i) => {
+            const pageUsers = extendedUsers.slice(
+              i * visibleCount,
+              i * visibleCount + visibleCount
+            );
+            return (
               <div
                 key={i}
                 className="flex space-x-2 w-full px-1 shrink-0 justify-start"
               >
-                {users
-                  .slice(i * visibleCount, i * visibleCount + visibleCount)
-                  .map((user, index) => (
-                    <div key={index} className=" flex-shrink-0">
-                      <Story
-                        username={user.login.username}
-                        avatar={user.picture.thumbnail}
-                      />
-                    </div>
-                  ))}
+                {pageUsers.map((user, idx) => (
+                  <div
+                    key={`${user.login?.username ?? "self"}-${i}-${idx}`}
+                    className="flex-shrink-0"
+                  >
+                    <Story
+                      username={user.login.username}
+                      avatar={user.isSelf ? undefined : user.picture?.thumbnail}
+                      isSelf={user.isSelf}
+                      onClick={() => !user.isSelf && openViewer(user)} // self = NON cliquable
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-
-        {/* Flèche gauche */}
-        <button
-          onClick={handlePrev}
-          disabled={page === 0}
-          className="absolute left-0 top-1/2 -translate-y-1/2 text-white disabled:opacity-30 p-1 bg-black bg-opacity-50 rounded-full"
-        >
-          <FiChevronLeft className="text-3xl" />
-        </button>
-
-        {/* Flèche droite */}
-        <button
-          onClick={handleNext}
-          disabled={page >= totalPages - 1}
-          className="absolute right-0 top-1/2 -translate-y-1/2 text-white disabled:opacity-30 p-1 bg-black bg-opacity-50 rounded-full"
-        >
-          <FiChevronRight className="text-3xl" />
-        </button>
       </div>
+
+      {/* Flèches */}
+      <button
+        onClick={handlePrev}
+        disabled={page === 0}
+        className="absolute left-0 top-1/2 -translate-y-1/2 text-white disabled:opacity-30 p-1 bg-black bg-opacity-50 rounded-full"
+      >
+        <FiChevronLeft className="text-3xl" />
+      </button>
+      <button
+        onClick={handleNext}
+        disabled={page >= totalPages - 1}
+        className="absolute right-0 top-1/2 -translate-y-1/2 text-white disabled:opacity-30 p-1 bg-black bg-opacity-50 rounded-full"
+      >
+        <FiChevronRight className="text-3xl" />
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="w-full max-w-xl mx-auto mb-6">
+      <div className="flex space-x-6 mb-4">
+        <span className="text-white font-semibold cursor-pointer hover:underline">
+          Pour Vous
+        </span>
+      </div>
+
+      {mobileStories}
+      {desktopStories}
+
+      {/* Modale */}
+      <StoryViewer
+        isOpen={viewerOpen}
+        onClose={closeViewer}
+        initialUser={viewerInitialUser}
+        initialStories={viewerInitialStories}
+        onRequestNextUser={requestNextUser}
+        onRequestPrevUser={requestPrevUser}
+      />
     </div>
   );
 }
