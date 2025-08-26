@@ -18,7 +18,7 @@ function MessagesOverlay() {
   }, []);
 
   return (
-    <div className="fixed left-20 top-0 bottom-0 w-[350px] bg-black border-r border-l border-gray-700 z-50 flex flex-col px-4 py-6 overflow-y-auto text-white">
+    <div className="fixed left-11 top-0 bottom-0 w-[350px] bg-black border-r border-l border-gray-700 z-50 flex flex-col px-4 py-6 overflow-y-auto text-white">
       {/* En-tête */}
       <div className="flex justify-between items-center mb-3">
         <span className="text-xl font-bold">

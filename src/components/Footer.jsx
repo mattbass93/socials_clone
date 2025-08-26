@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <div className="w-full max-w-4xl mx-auto py-8 text-xs text-gray-500">
+    <div className="w-screen max-w-4xl mx-auto py-8 text-xs text-gray-500">
       {/* Première ligne */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-4">
         <span>Meta</span>
