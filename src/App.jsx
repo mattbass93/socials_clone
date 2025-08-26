@@ -6,12 +6,16 @@ import Discover from "./pages/Discover";
 import Messages from "./pages/Messages";
 import Reels from "./pages/Reels";
 import SearchOverlay from "./components/SearchOverlay";
+import Search from "./pages/Search";
+import Notifications from "./pages/Notifications";
 import NotificationsOverlay from "./components/NotificationsOverlay";
 import MessagesOverlay from "./components/MessagesOverlay";
 import Profile from "./pages/Profile";
 import MetaAi from "./pages/MetaAi";
 import AiStudio from "./pages/AiStudio";
 import Threads from "./pages/Threads";
+import SettingsAndActivity from "./pages/SettingsAndActivity";
+import CreateMobile from "./pages/CreateMobile";
 
 function App() {
   const [activeOverlay, setActiveOverlay] = useState(null); // 'search' | 'notifications' | 'messages' | null
@@ -22,7 +26,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex">
+      <div className="flex pb-14">
         <Navbar
           activeOverlay={activeOverlay}
           onSearchClick={() => handleOverlay("search")}
@@ -36,10 +40,14 @@ function App() {
             <Route path="/reels" element={<Reels />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/meta_ai" element={<MetaAi />} />
             <Route path="/ai_studio" element={<AiStudio />} />
             <Route path="/threads" element={<Threads />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/settings" element={<SettingsAndActivity />} />
+            <Route path="/create" element={<CreateMobile />} />
           </Routes>
         </div>
       </div>
