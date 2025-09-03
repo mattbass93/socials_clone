@@ -1,24 +1,56 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaRegHeart,
   FaHeart,
   FaRegComment,
   FaRegBookmark,
-  FaEllipsisH,
+  FaBookmark,
 } from "react-icons/fa";
 import { faker } from "@faker-js/faker";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiMoreHorizontal, FiMoreVertical } from "react-icons/fi";
 import { fetchVideos, fetchUsers } from "../services/api";
 import CommentModal from "../components/CommentModal";
+import SendModal from "../components/SendModal";
+import BottomSheet from "../components/BottomSheet";
+
+// Hook utilitaire : savoir si on est en >= lg (1024px)
+function useIsLgUp() {
+  const [isLgUp, setIsLgUp] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e) => setIsLgUp(e.matches);
+    setIsLgUp(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return isLgUp;
+}
 
 export default function Reels() {
   const [reelsData, setReelsData] = useState([]);
-  const [likedMap, setLikedMap] = useState({}); // { [id]: boolean }
-  const [expandedMap, setExpandedMap] = useState({}); // { [id]: boolean } -> description étendue ?
+  const [likedMap, setLikedMap] = useState({});
+  const [expandedMap, setExpandedMap] = useState({});
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [currentReelForComments, setCurrentReelForComments] = useState(null);
 
-  // Seuil approximatif au-delà duquel on affiche "Plus"
+  const [isSendOpen, setIsSendOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+
+  // --- BottomSheet "Plus" ---
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+  // --- Bookmark / Miniature flottante (version mobile uniquement) ---
+  const [bookmarkedMap, setBookmarkedMap] = useState({});
+  const [showMiniPreview, setShowMiniPreview] = useState(false);
+  const [miniPreviewSrc, setMiniPreviewSrc] = useState("");
+  const [animIn, setAnimIn] = useState(false);
+  const [disappearing, setDisappearing] = useState(false);
+  const timerEnterRef = useRef(null);
+  const timerExitStartRef = useRef(null);
+  const timerExitHideRef = useRef(null);
+
+  const isLgUp = useIsLgUp();
+
   const DESCRIPTION_CUTOFF = 80;
 
   useEffect(() => {
@@ -36,9 +68,16 @@ export default function Reels() {
               video.video_files.find((f) => f.quality === "sd")?.link ||
               video.video_files[0]?.link;
 
+            const thumbnail =
+              video.image ||
+              video.video_pictures?.[0]?.picture ||
+              video.video_pictures?.[0]?.nr ||
+              null;
+
             return {
               id: video.id,
               url,
+              thumbnail,
               title: faker.lorem.words(4),
               description: faker.lorem.paragraphs({ min: 1, max: 2 }),
               audio: `${faker.word.adjective()} · Audio`,
@@ -52,12 +91,21 @@ export default function Reels() {
           });
 
         setReelsData(reels);
+        setAllUsers(users);
       } catch (error) {
         console.error("Erreur lors du chargement des Reels :", error);
       }
     }
 
     loadData();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerEnterRef.current) clearTimeout(timerEnterRef.current);
+      if (timerExitStartRef.current) clearTimeout(timerExitStartRef.current);
+      if (timerExitHideRef.current) clearTimeout(timerExitHideRef.current);
+    };
   }, []);
 
   const formatCompact = (n) =>
@@ -93,9 +141,60 @@ export default function Reels() {
     setCurrentReelForComments(null);
   };
 
+  const openSend = () => setIsSendOpen(true);
+  const closeSend = () => setIsSendOpen(false);
+
+  // --- BottomSheet handlers ---
+  const openMore = () => setIsMoreOpen(true);
+  const closeMore = () => setIsMoreOpen(false);
+
+  // --- Miniature animée (déclenchée uniquement si < lg) ---
+  const triggerMiniPreview = (src) => {
+    if (!src) return;
+    setMiniPreviewSrc(src);
+    setShowMiniPreview(true);
+    setDisappearing(false);
+    setAnimIn(false);
+
+    if (timerEnterRef.current) clearTimeout(timerEnterRef.current);
+    timerEnterRef.current = setTimeout(() => setAnimIn(true), 0);
+
+    if (timerExitStartRef.current) clearTimeout(timerExitStartRef.current);
+    timerExitStartRef.current = setTimeout(() => {
+      setDisappearing(true);
+      setAnimIn(false);
+
+      if (timerExitHideRef.current) clearTimeout(timerExitHideRef.current);
+      timerExitHideRef.current = setTimeout(() => {
+        setShowMiniPreview(false);
+        setDisappearing(false);
+        setMiniPreviewSrc("");
+      }, 300);
+    }, 1700);
+  };
+
+  // --- Bookmark (icône blanche + mini preview mobile uniquement) ---
+  const toggleBookmark = (reel) => {
+    setBookmarkedMap((prev) => {
+      const next = !prev[reel.id];
+
+      // Miniature uniquement sur mobile (< lg)
+      if (next && !isLgUp) {
+        const miniSrc = reel?.thumbnail || reel?.poster || reel?.url || "";
+        triggerMiniPreview(miniSrc);
+      }
+
+      return { ...prev, [reel.id]: next };
+    });
+  };
+
+  const isBookmarked = useMemo(
+    () => (id) => !!bookmarkedMap[id],
+    [bookmarkedMap]
+  );
+
   return (
     <div className="w-full h-screen mx-auto bg-black text-white relative overflow-hidden">
-      {/* Flux vertical plein écran avec snap */}
       <div className="h-screen overflow-y-scroll snap-y snap-mandatory snap-always">
         {reelsData.map((reel) => {
           const isExpanded = !!expandedMap[reel.id];
@@ -109,24 +208,21 @@ export default function Reels() {
                 lg:h-[700px] lg:my-8 lg:snap-center lg:flex lg:items-center lg:justify-center
               "
             >
-              {/* === CONTENEUR VIDÉO (taille fixe en lg pour 382x640) === */}
               <div className="relative w-full h-full lg:w-[382px] lg:h-[640px]">
-                {/* Vidéo en fond, couvre le conteneur */}
                 <video
                   src={reel.url}
                   autoPlay
                   muted
                   loop
                   playsInline
+                  poster={reel.thumbnail || undefined}
                   className="absolute inset-0 h-full w-full object-cover bg-black z-0"
                 />
 
-                {/* Gradients (dans le wrapper vidéo) */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10" />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/60 to-transparent z-10" />
 
-                {/* Infos bas gauche — description 1 ligne + bouton Plus/Moins */}
-                <div className="absolute bottom-4 left-4 right-20 lg:right-4 z-20 text-sm space-y-2">
+                <div className="absolute bottom-18 lg:bottom-4 left-4 right-20 lg:right-4 z-20 text-sm space-y-2">
                   <div className="flex items-center gap-2">
                     <img
                       src={reel.user.avatar}
@@ -139,7 +235,6 @@ export default function Reels() {
                     </button>
                   </div>
 
-                  {/* Ligne description + bouton Plus/Moins */}
                   <div className="flex items-baseline gap-2 pr-2">
                     <p
                       className={
@@ -166,8 +261,8 @@ export default function Reels() {
                   <p className="text-xs text-gray-300">{reel.audio}</p>
                 </div>
 
-                {/* Colonne d'actions superposée (MOBILE seulement) */}
-                <div className="absolute bottom-4 right-4 flex flex-col items-center space-y-5 z-20 lg:hidden">
+                {/* Mobile actions */}
+                <div className="absolute bottom-18 right-4 flex flex-col items-center space-y-5 z-20 lg:hidden">
                   <button
                     type="button"
                     aria-label={likedMap[reel.id] ? "Retirer le like" : "Liker"}
@@ -194,14 +289,44 @@ export default function Reels() {
                     <span className="text-xs mt-1">{reel.comments}</span>
                   </button>
 
-                  <button type="button" aria-label="Partager">
+                  <button
+                    type="button"
+                    aria-label="Partager"
+                    onClick={openSend}
+                  >
                     <FiSend className="text-2xl" />
                   </button>
-                  <button type="button" aria-label="Enregistrer">
-                    <FaRegBookmark className="text-2xl" />
+
+                  {/* Bookmark */}
+                  <button
+                    type="button"
+                    aria-label={
+                      isBookmarked(reel.id)
+                        ? "Retirer des favoris"
+                        : "Enregistrer"
+                    }
+                    onClick={() => toggleBookmark(reel)}
+                    className="cursor-pointer"
+                    title={
+                      isBookmarked(reel.id)
+                        ? "Retirer des favoris"
+                        : "Enregistrer"
+                    }
+                  >
+                    {isBookmarked(reel.id) ? (
+                      <FaBookmark className="text-2xl text-white" />
+                    ) : (
+                      <FaRegBookmark className="text-2xl" />
+                    )}
                   </button>
-                  <button type="button" aria-label="Plus d'options">
-                    <FaEllipsisH className="text-xl" />
+
+                  {/* Icône verticale pour mobile -> BottomSheet */}
+                  <button
+                    type="button"
+                    aria-label="Plus d'options"
+                    onClick={openMore}
+                  >
+                    <FiMoreVertical className="text-xl" />
                   </button>
 
                   <img
@@ -212,7 +337,7 @@ export default function Reels() {
                 </div>
               </div>
 
-              {/* === COLONNE D'ACTIONS À DROITE (DESKTOP lg+) — en dehors de la vidéo === */}
+              {/* Desktop actions */}
               <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-end lg:ml-4 lg:h-[640px]">
                 <div className="flex flex-col items-center space-y-5">
                   <button
@@ -241,14 +366,44 @@ export default function Reels() {
                     <span className="text-xs mt-1">{reel.comments}</span>
                   </button>
 
-                  <button type="button" aria-label="Partager">
+                  <button
+                    type="button"
+                    aria-label="Partager"
+                    onClick={openSend}
+                  >
                     <FiSend className="text-2xl" />
                   </button>
-                  <button type="button" aria-label="Enregistrer">
-                    <FaRegBookmark className="text-2xl" />
+
+                  {/* Bookmark */}
+                  <button
+                    type="button"
+                    aria-label={
+                      isBookmarked(reel.id)
+                        ? "Retirer des favoris"
+                        : "Enregistrer"
+                    }
+                    onClick={() => toggleBookmark(reel)}
+                    className="cursor-pointer"
+                    title={
+                      isBookmarked(reel.id)
+                        ? "Retirer des favoris"
+                        : "Enregistrer"
+                    }
+                  >
+                    {isBookmarked(reel.id) ? (
+                      <FaBookmark className="text-2xl text-white" />
+                    ) : (
+                      <FaRegBookmark className="text-2xl" />
+                    )}
                   </button>
-                  <button type="button" aria-label="Plus d'options">
-                    <FaEllipsisH className="text-xl" />
+
+                  {/* Icône horizontale pour desktop -> BottomSheet */}
+                  <button
+                    type="button"
+                    aria-label="Plus d'options"
+                    onClick={openMore}
+                  >
+                    <FiMoreHorizontal className="text-xl" />
                   </button>
 
                   <img
@@ -263,13 +418,41 @@ export default function Reels() {
         })}
       </div>
 
-      {/* Modale des commentaires */}
       {isCommentsOpen && currentReelForComments && (
         <CommentModal
           user={currentReelForComments.user}
           onClose={closeComments}
           height="half"
         />
+      )}
+
+      {isSendOpen && <SendModal onClose={closeSend} users={allUsers} />}
+
+      {/* BottomSheet "Plus" — maquette, sans logique d’actions */}
+      <BottomSheet open={isMoreOpen} onClose={closeMore} />
+
+      {/* Miniature flottante animée — visible uniquement sur mobile */}
+      {showMiniPreview && miniPreviewSrc && (
+        <div className="fixed bottom-8 right-0 flex justify-center pointer-events-none z-50 lg:hidden">
+          <div
+            className={[
+              "transform-gpu transition-all duration-300 ease-in-out",
+              !animIn && !disappearing
+                ? "opacity-0 scale-70 translate-y-2"
+                : "",
+              animIn && !disappearing
+                ? "opacity-100 scale-80 translate-y-0"
+                : "",
+              disappearing ? "opacity-0 scale-70 translate-y-6" : "",
+            ].join(" ")}
+          >
+            <img
+              src={miniPreviewSrc}
+              alt="Aperçu enregistré"
+              className="w-16 h-16 object-cover"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

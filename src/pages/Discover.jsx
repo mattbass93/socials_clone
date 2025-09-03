@@ -67,7 +67,7 @@ function Discover() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto lg:ml-[25%] p-4">
+    <div className="w-full max-w-2xl mx-auto md:ml-[13%] lg:ml-[13%] xl:ml-[20%] 2xl:ml-[25%] lg:max-w-4xl xl:max-w-5xl p-4">
       {/* Onglets */}
       <div className="flex space-x-6 mb-4">
         <span
@@ -111,10 +111,10 @@ function Discover() {
               />
 
               {/* Overlay semi-transparent */}
-              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-80 z-10"></div>
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-80 z-10 hidden md:block"></div>
 
               {/* Compteurs visibles seulement au hover */}
-              <div className="absolute inset-0 z-20 flex items-center justify-center space-x-6 text-white text-sm font-semibold opacity-0 group-hover:opacity-100">
+              <div className="absolute inset-0 z-20 flex items-center justify-center space-x-6 text-white text-sm font-semibold opacity-0 group-hover:opacity-100 hidden md:flex">
                 <div className="flex items-center space-x-1">
                   <FaHeart className="text-lg" />
                   <span>{likes}</span>

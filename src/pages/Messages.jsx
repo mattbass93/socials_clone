@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { FaCamera, FaPen, FaArrowLeft } from "react-icons/fa";
-
 import MessagesOverlay from "../components/MessagesOverlay";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -99,8 +98,15 @@ function Messages() {
 
       {/* ✅ Layout desktop */}
       <div className="hidden lg:flex h-full">
-        <div className="absolute top-0 left-0 z-50">
-          <MessagesOverlay />
+        {/* Couche overlay desktop (comme Search/Notifications) :
+            - fixed + pointer-events-none pour laisser passer les clics Navbar
+            - contenu pointer-events-auto
+            - z ABAISSÉ pour rester sous Search/Notifications */}
+        <div className="hidden md:block fixed inset-0 z-[40] pointer-events-none">
+          <div className="pointer-events-auto">
+            {/* visible = true à l'ouverture de la page -> anim d'entrée */}
+            <MessagesOverlay visible={true} />
+          </div>
         </div>
 
         <div className="flex-1 ml-55 flex flex-col items-center justify-center text-center px-4">
