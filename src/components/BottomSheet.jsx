@@ -98,10 +98,64 @@ function BottomSheet({ open, onClose }) {
         onClick={onClose}
       />
 
-      {/* Sheet */}
+      {/* ===== DESKTOP (>= lg) : carte centrée façon Instagram ===== */}
+      <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
+        <div className="pointer-events-auto w-[300px] rounded-2xl bg-[#1c1c1e] text-white border border-gray-800 shadow-2xl">
+          <div className="px-4 pb-3">
+            <ul className="text-[15px] select-none">
+              {/* Première section */}
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg text-red-500">
+                  Signaler
+                </button>
+              </li>
+              <li className="mt-1">
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg text-blue-400">
+                  Suivre
+                </button>
+              </li>
+
+              <hr className="my-2 border-neutral-800" />
+
+              {/* Deuxième section */}
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg">
+                  Accéder à la publication
+                </button>
+              </li>
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg">
+                  Partager sur…
+                </button>
+              </li>
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg">
+                  Copier le lien
+                </button>
+              </li>
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg">
+                  Intégrer
+                </button>
+              </li>
+
+              <hr className="my-2 border-neutral-800" />
+
+              {/* Troisième section */}
+              <li>
+                <button className="w-full text-left py-3 px-2 hover:bg-neutral-900 rounded-lg text-gray-300">
+                  À propos de ce compte
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== MOBILE/TABLET : bottom sheet original (logiques conservées) ===== */}
       <div
         className={[
-          "absolute bottom-0 left-0 right-0 bg-[#1c1c1e] text-white border-t border-gray-800 rounded-t-2xl",
+          "lg:hidden absolute bottom-0 left-0 right-0 bg-[#1c1c1e] text-white border-t border-gray-800 rounded-t-2xl",
           isDragging
             ? "transition-none"
             : "transition-transform duration-200 ease-out",
