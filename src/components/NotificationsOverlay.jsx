@@ -1,14 +1,40 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-function NotificationsOverlay({ onClose }) {
-  const [notifications, setNotifications] = useState([]);
-  const overlayRef = useRef(null);
+const TRANSITION_MS = 300;
 
+function NotificationsOverlay({ visible, onClose }) {
+  const [notifications, setNotifications] = useState([]);
+  const [shouldRender, setShouldRender] = useState(false);
+  const [entered, setEntered] = useState(false);
+
+  const overlayRef = useRef(null);
+  const rafRef = useRef(null);
+  const timerRef = useRef(null);
+
+  // Id d'ouverture pour ignorer les résultats obsolètes
+  const openIdRef = useRef(0);
+
+  const nextFrame = (cb) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (overlayRef.current) overlayRef.current.getBoundingClientRect();
+      rafRef.current = requestAnimationFrame(() => cb?.());
+    });
+  };
+
+  // Charger des données quand visible (anti-double-fetch)
   useEffect(() => {
+    if (!visible) return;
+    const myOpenId = ++openIdRef.current;
+
+    const controller = new AbortController();
     axios
-      .get("https://randomuser.me/api/?results=6")
+      .get("https://randomuser.me/api/?results=6", {
+        signal: controller.signal,
+      })
       .then((res) => {
+        if (openIdRef.current !== myOpenId) return; // ignorer résultats obsolètes
         const rawUsers = res.data.results;
         const sampleNotifications = [
           {
@@ -64,25 +90,65 @@ function NotificationsOverlay({ onClose }) {
         ];
         setNotifications(sampleNotifications);
       })
-      .catch(console.error);
-  }, []);
+      .catch((err) => {
+        if (axios.isCancel?.(err)) return;
+        if (err.name === "CanceledError") return;
+        console.error(err);
+      });
 
-  // 👇 Fermer si clic en dehors
+    return () => controller.abort();
+  }, [visible]);
+
+  // Fermer si clic en dehors (uniquement quand monté)
   useEffect(() => {
+    if (!shouldRender) return;
     const handleClickOutside = (e) => {
       if (overlayRef.current && !overlayRef.current.contains(e.target)) {
-        onClose();
+        onClose?.();
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, [shouldRender, onClose]);
+
+  // Animation entrée/sortie
+  useEffect(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (visible) {
+      setShouldRender(true);
+      setEntered(false);
+      nextFrame(() => setEntered(true));
+      timerRef.current = setTimeout(() => {}, TRANSITION_MS);
+    } else if (shouldRender) {
+      setEntered(false);
+      timerRef.current = setTimeout(
+        () => setShouldRender(false),
+        TRANSITION_MS
+      );
+    }
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [visible, shouldRender]);
+
+  if (!shouldRender) return null;
 
   return (
     <div
       ref={overlayRef}
-      className="fixed top-0 left-11 bottom-0 w-100 bg-black border-r border-gray-700 text-white px-6 pt-8 overflow-y-auto z-50"
+      className={[
+        "fixed top-0 md:left-18 bottom-0 w-100 bg-black border-r border-gray-700 text-white",
+        "px-6 pt-8 overflow-y-auto",
+        "transform will-change-transform origin-left",
+        "transition-transform duration-300 ease-out",
+        "z-[60]",
+        entered ? "translate-x-0" : "-translate-x-full",
+      ].join(" ")}
+      aria-label="Panneau de notifications"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">

@@ -1,13 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { FiEdit2 } from "react-icons/fi";
 import { BiSearch } from "react-icons/bi";
 
-function MessagesOverlay() {
+const TRANSITION_MS = 300;
+
+function MessagesOverlay({ visible = true, onClose }) {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
 
+  const panelRef = useRef(null);
+  const rafRef = useRef(null);
+  const timerRef = useRef(null);
+
+  // Contrôle de rendu + état visuel
+  const [shouldRender, setShouldRender] = useState(false); // reste monté pendant la sortie
+  const [entered, setEntered] = useState(false); // true => translate-x-0
+
+  // utilité : garantit que la position initiale est peinte avant de lancer l'anim
+  const nextFrame = (cb) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (panelRef.current) panelRef.current.getBoundingClientRect(); // force reflow
+      rafRef.current = requestAnimationFrame(() => cb?.());
+    });
+  };
+
+  // Charger les données quand l’overlay devient visible
   useEffect(() => {
+    if (!visible) return;
     axios
       .get("https://randomuser.me/api/?results=8")
       .then((res) => {
@@ -15,14 +36,66 @@ function MessagesOverlay() {
         setCurrentUser(res.data.results[0]); // le 1er user comme profil actuel
       })
       .catch(console.error);
-  }, []);
+  }, [visible]);
+
+  // Orchestration entrée/sortie
+  useEffect(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (visible) {
+      setShouldRender(true);
+      setEntered(false); // hors écran
+      nextFrame(() => setEntered(true)); // -> translate-x-0 (anim d'entrée)
+      timerRef.current = setTimeout(() => {
+        // fin anim entrée (optionnel)
+      }, TRANSITION_MS);
+    } else if (shouldRender) {
+      setEntered(false); // -> -translate-x-full (anim de sortie)
+      timerRef.current = setTimeout(() => {
+        setShouldRender(false); // démonte après la transition
+      }, TRANSITION_MS);
+    }
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [visible, shouldRender]);
+
+  // (Optionnel) fermer si clic en dehors — seulement si onClose est fourni
+  useEffect(() => {
+    if (!shouldRender || !onClose) return;
+    const handleClickOutside = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        onClose?.();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [shouldRender, onClose]);
+
+  if (!shouldRender) return null;
 
   return (
-    <div className="fixed left-11 top-0 bottom-0 w-[350px] bg-black border-r border-l border-gray-700 z-50 flex flex-col px-4 py-6 overflow-y-auto text-white">
+    <div
+      ref={panelRef}
+      className={[
+        "fixed md:left-18 top-0 bottom-0 w-[350px] bg-black",
+        "border-r border-l border-gray-700",
+        // z faible : c'est le wrapper (dans Messages.jsx) qui déterminera la pile globale
+        "z-10 flex flex-col px-4 py-6 overflow-y-auto text-white",
+        // Animations (identiques aux autres overlays)
+        "transform will-change-transform origin-left",
+        "transition-transform duration-300 ease-out",
+        entered ? "translate-x-0" : "-translate-x-full",
+      ].join(" ")}
+      aria-label="Panneau Messages"
+    >
       {/* En-tête */}
       <div className="flex justify-between items-center mb-3">
         <span className="text-xl font-bold">
-          {currentUser?.login.username || "Utilisateur"}
+          {currentUser?.login?.username || "Utilisateur"}
         </span>
         <FiEdit2 className="text-xl cursor-pointer" />
       </div>
