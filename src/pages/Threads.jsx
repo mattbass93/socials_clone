@@ -81,7 +81,8 @@ function Threads() {
 
       {/* Contenu central */}
       <div className="flex-1 overflow-y-auto pt-2 md:pt-4 flex justify-center">
-        <div className="w-full max-w-xl px-4 pb-12">
+        {/* ✅ prend toute la place à partir de md */}
+        <div className="w-full max-w-xl md:max-w-6xl px-4 pb-12">
           {/* Header avec retour et bouton se connecter */}
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <button
@@ -123,7 +124,7 @@ function Threads() {
               </div>
 
               {post.media && (
-                <div className="w-full h-64 md:h-80 rounded-md overflow-hidden mb-3">
+                <div className="w-full h-64 md:h-96 rounded-md overflow-hidden mb-3">
                   <img
                     src={post.media}
                     alt="media"

@@ -7,9 +7,11 @@ import {
   FaBookmark,
 } from "react-icons/fa";
 import { FiSend, FiMoreHorizontal, FiMoreVertical } from "react-icons/fi";
+import { BsEmojiSmile } from "react-icons/bs";
 import CommentModal from "./CommentModal";
 import SendModal from "./SendModal";
 import BottomSheet from "./BottomSheet";
+import EmojiPicker from "./EmojiPicker";
 
 // Génére un tableau de commentaires dynamiques (sans fallbackText)
 function generateRandomComments(users, count = 5) {
@@ -24,25 +26,23 @@ function generateRandomComments(users, count = 5) {
   }));
 }
 
-// Génère un nombre de jours aléatoire entre 1 et 6
 function getRandomDayCount() {
   return Math.floor(Math.random() * 6) + 1;
 }
-
-// Génère un nombre de likes aléatoire (par ex. 120 à 9 500)
 function getRandomLikes() {
   return Math.floor(Math.random() * (9500 - 120 + 1)) + 120;
+}
+function getRandomCommentsCount() {
+  return Math.floor(Math.random() * (1200 - 12 + 1)) + 12;
 }
 
 function Post({ user, media, description, users = [] }) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSendOpen, setSendOpen] = useState(false);
 
-  // Like
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(getRandomLikes());
 
-  // Bookmark + animation miniature
   const [bookmarked, setBookmarked] = useState(false);
   const [showMiniPreview, setShowMiniPreview] = useState(false);
   const [animIn, setAnimIn] = useState(false);
@@ -51,12 +51,53 @@ function Post({ user, media, description, users = [] }) {
   const timerExitStartRef = useRef(null);
   const timerExitHideRef = useRef(null);
 
+  // lg: détection desktop pour désactiver l'animation de mini preview
+  const [isDesktop, setIsDesktop] = useState(false);
+
   // Menu « plus »
   const [isMoreOpen, setMoreOpen] = useState(false);
 
   const randomComments = useMemo(() => generateRandomComments(users), [users]);
   const dayCount = useMemo(() => getRandomDayCount(), []);
   const commentsCount = randomComments.length;
+  const desktopCommentsCount = useMemo(() => getRandomCommentsCount(), []);
+
+  // Champ de saisie + emoji
+  const [commentText, setCommentText] = useState("");
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const emojiBtnWrapperRef = useRef(null);
+
+  // --- Mobile: nom d'utilisateur fictif aléatoire pour "Aimé par ... et d'autres personnes"
+  const fakeUsernames = useMemo(
+    () => [
+      "bluefrog22",
+      "pixel_panda",
+      "nova_kite",
+      "astro_lemur",
+      "citruswave",
+      "m0onrabbit",
+      "quietquokka",
+      "emberleaf",
+      "glitch_owl",
+      "koriandair",
+      "frenchtoffee",
+      "zen_racoon",
+      "echo_marmot",
+      "saffronbyte",
+      "lowpolyfox",
+      "velvetmoss",
+      "orbit_lynx",
+      "prisme_noir",
+      "neonfig",
+      "luna_biscuit",
+    ],
+    []
+  );
+  const likedByName = useMemo(
+    () => fakeUsernames[Math.floor(Math.random() * fakeUsernames.length)],
+    [fakeUsernames]
+  );
+  // ---
 
   const handleCommentClick = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
@@ -90,14 +131,50 @@ function Post({ user, media, description, users = [] }) {
     }, 1700);
   };
 
+  // A partir de lg:, on enlève l'animation de mini preview (juste l'icône se remplit)
   const toggleBookmark = () => {
     if (!bookmarked) {
       setBookmarked(true);
-      triggerMiniPreview();
+      if (!isDesktop) {
+        // animation uniquement en < lg
+        triggerMiniPreview();
+      }
     } else {
       setBookmarked(false);
     }
   };
+
+  const submitComment = () => {
+    const text = commentText.trim();
+    if (!text) return;
+    console.log("Nouveau commentaire:", text);
+    setCommentText("");
+  };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") setIsEmojiOpen(false);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "enter") {
+        submitComment();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [commentText]);
+
+  // Observer lg: pour activer/désactiver l'animation
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    if (mq.addEventListener) mq.addEventListener("change", handler);
+    else mq.addListener(handler);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", handler);
+      else mq.removeListener(handler);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -107,19 +184,16 @@ function Post({ user, media, description, users = [] }) {
     };
   }, []);
 
-  // Source miniature
   const miniSrc =
     media?.type === "image"
       ? media?.url
       : media?.thumbnail || media?.poster || media?.url;
 
-  // Actions du sheet (branche ce que tu veux)
   const handleSheetAction = (id) => {
     switch (id) {
       case "save":
         toggleBookmark();
         break;
-      // ajoute ici tes comportements selon les ids (remix, qr, unfollow, etc.)
       default:
         console.log("Action feuille:", id);
         break;
@@ -129,8 +203,7 @@ function Post({ user, media, description, users = [] }) {
 
   return (
     <>
-      {/* Post principal */}
-      <div className="w-screen max-w-[468px] mx-auto transition mb-6 bg-black text-white border-b border-gray-700 rounded-none sm:rounded-lg">
+      <div className="w-screen max-w-[468px] mx-auto transition mb-6 bg-black text-white lg:border-b border-gray-700 rounded-none sm:rounded-lg">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center space-x-3">
@@ -195,7 +268,7 @@ function Post({ user, media, description, users = [] }) {
               ) : (
                 <FaRegHeart className="text-xl sm:text-2xl" />
               )}
-              <span className="text-sm sm:text-base tabular-nums">
+              <span className="text-sm sm:text-base tabular-nums lg:hidden">
                 {likesCount.toLocaleString("fr-FR")}
               </span>
             </button>
@@ -207,7 +280,7 @@ function Post({ user, media, description, users = [] }) {
               aria-label="commentaires"
             >
               <FaRegComment className="text-xl sm:text-2xl" />
-              <span className="text-sm sm:text-base tabular-nums">
+              <span className="text-sm sm:text-base tabular-nums lg:hidden">
                 {commentsCount}
               </span>
             </button>
@@ -234,9 +307,14 @@ function Post({ user, media, description, users = [] }) {
         </div>
 
         {/* Likes */}
-        <div className="text-sm font-semibold mb-2 px-1">
-          Aimé par <span className="font-semibold">{users[1]?.username}</span>{" "}
-          et d'autres personnes
+        {/* Mobile: utilise un username fictif aléatoire */}
+        <div className="text-sm font-semibold mb-2 px-1 lg:hidden">
+          Aimé par <span className="font-semibold">{likedByName}</span> et
+          d'autres personnes
+        </div>
+        {/* Desktop: nombre total de likes */}
+        <div className="hidden lg:block text-sm font-semibold mb-2 px-1">
+          {likesCount.toLocaleString("fr-FR")} j'aime
         </div>
 
         {/* Description */}
@@ -244,9 +322,66 @@ function Post({ user, media, description, users = [] }) {
           <span className="font-semibold mr-2">{user.username}</span>
           <span className="line-clamp-2">{description}</span>
         </div>
+
+        {/* Afficher commentaires */}
+        <div className="hidden lg:block text-sm text-gray-300 mb-3 px-1">
+          <button
+            type="button"
+            onClick={handleCommentClick}
+            className="hover:text-gray-200"
+          >
+            Afficher {desktopCommentsCount.toLocaleString("fr-FR")} commentaires
+          </button>
+        </div>
+
+        {/* Champ commentaire */}
+        <div className="hidden lg:flex items-center gap-2 px-1 pb-3">
+          <input
+            type="text"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submitComment();
+              }
+            }}
+            placeholder="Ajouter un commentaire..."
+            className="flex-1 bg-transparent text-sm placeholder-gray-500 focus:outline-none py-1"
+          />
+
+          {/* Publier visible seulement si texte */}
+          {commentText.trim() && (
+            <button
+              type="button"
+              onClick={submitComment}
+              className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+            >
+              Publier
+            </button>
+          )}
+
+          {/* Bouton emoji */}
+          <div className="relative" ref={emojiBtnWrapperRef}>
+            <button
+              type="button"
+              className="p-2 rounded-md hover:bg-gray-800 transition"
+              onClick={() => setIsEmojiOpen((v) => !v)}
+            >
+              <BsEmojiSmile className="text-sm" />
+            </button>
+            {isEmojiOpen && (
+              <EmojiPicker
+                onClose={() => setIsEmojiOpen(false)}
+                onSelect={(emoji) => setCommentText((t) => t + emoji)}
+                className="absolute right-0 top-10"
+              />
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Miniature flottante animée */}
+      {/* Mini preview (affichée uniquement si activée côté < lg) */}
       {showMiniPreview && miniSrc && (
         <div className="fixed bottom-8 right-0 flex justify-center pointer-events-none z-50">
           <div
@@ -270,7 +405,7 @@ function Post({ user, media, description, users = [] }) {
         </div>
       )}
 
-      {/* Modales existantes */}
+      {/* Modales */}
       {isModalOpen && (
         <CommentModal
           user={user}
@@ -280,7 +415,6 @@ function Post({ user, media, description, users = [] }) {
       )}
       {isSendOpen && <SendModal onClose={handleSendClose} />}
 
-      {/* Feuille d’options */}
       <BottomSheet
         open={isMoreOpen}
         onClose={() => setMoreOpen(false)}

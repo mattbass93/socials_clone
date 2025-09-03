@@ -10,9 +10,9 @@ function SettingsAndActivity() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full min-h-screen bg-black text-white">
+    <div className="w-full min-h-screen md:ml-[9%] xl:ml-[19%] 2xl:ml-[16%] bg-black text-white">
       {/* ✅ Barre fixe en haut */}
-      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-black z-50 gap-2 border-b border-gray-800">
+      <div className="h-14 px-4 flex items-center justify-start bg-black z-50 gap-[30%] border-b border-gray-800">
         {/* Bouton de retour arrière */}
         <button
           className="text-2xl"
@@ -21,10 +21,9 @@ function SettingsAndActivity() {
           <IoArrowBack />
         </button>
         <h1 className="text-md font-bold">Paramètres et Activités</h1>
-        <div className="w-6"></div> {/* Placeholder pour équilibrer l'espace */}
       </div>
 
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 py-6 space-y-6 md:max-w-[90%] xl:max-w-[80%]">
         {/* Paramètres */}
         <section>
           <h2 className="text-sm font-semibold text-gray-400 uppercase mb-3">

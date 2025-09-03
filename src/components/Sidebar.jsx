@@ -39,7 +39,7 @@ function Sidebar() {
             {user.location.city}, {user.location.country}
           </p>
         </div>
-        <span className="ml-auto text-blue-500 cursor-pointer hover:underline">
+        <span className="ml-auto text-[#708DFF] cursor-pointer hover:underline">
           Basculer
         </span>
       </div>
@@ -67,7 +67,7 @@ function Sidebar() {
                 {sug.location.city}, {sug.location.country}
               </p>
             </div>
-            <span className="ml-auto text-pink-500 text-xs cursor-pointer hover:text-pink-400">
+            <span className="ml-auto text-[#708DFF] text-xs cursor-pointer hover:brightness-125">
               Suivre
             </span>
           </div>
