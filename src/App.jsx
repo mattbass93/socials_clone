@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -25,7 +25,7 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="flex pb-14">
         <Navbar
           activeOverlay={activeOverlay}
@@ -61,7 +61,7 @@ function App() {
       {activeOverlay === "messages" && (
         <MessagesOverlay onClose={() => setActiveOverlay(null)} />
       )}
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

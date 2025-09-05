@@ -42,7 +42,7 @@ export default function MoreMenu({ onClose }) {
   return (
     <div
       ref={menuRef}
-      className="fixed bottom-20 left-4 w-56 bg-[#262626] rounded-xl shadow-lg py-2 z-[100] text-sm text-white border border-[#333]"
+      className="fixed bottom-22 left-4 w-56 bg-[#262626] rounded-xl shadow-lg py-2 z-[100] text-sm text-white border border-[#333]"
     >
       <div className={itemClass}>
         <FiSettings className={logoClass} /> Paramètres
